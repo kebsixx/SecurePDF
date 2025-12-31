@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecurePDF Pro - Offline & Secure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+      .sortable-ghost {
+        opacity: 0.4;
+        border: 2px solid #4f46e5;
+      }
+      .drag-handle {
+        cursor: grab;
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 min-h-screen pb-20">
+    <div class="max-w-5xl mx-auto py-10 px-4">
+      <div
+        class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+        <div>
+          <h1 class="text-3xl font-black text-indigo-600 tracking-tight">
+            SECURE<span class="text-slate-800">PDF</span>
+          </h1>
+          <p class="text-slate-500 text-sm">
+            Privasi Total: Pemrosesan 100% di Browser Anda.
+          </p>
+        </div>
+        <div class="flex flex-wrap justify-end gap-3">
+          <select
+            id="pageSize"
+            class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="a4">Kertas: A4</option>
+            <option value="a3">Kertas: A3</option>
+            <option value="a5">Kertas: A5</option>
+            <option value="letter">Kertas: Letter</option>
+            <option value="legal">Kertas: Legal</option>
+          </select>
+          <select
+            id="orientation"
+            class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="auto">Orientasi: Auto (Ikuti Gambar)</option>
+            <option value="p">Orientasi: Portrait</option>
+            <option value="l">Orientasi: Landscape</option>
+          </select>
+          <select
+            id="marginSize"
+            class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="0">Tanpa Margin</option>
+            <option value="5">Margin Sangat Kecil (5mm)</option>
+            <option value="10">Margin Kecil (10mm)</option>
+            <option value="20">Margin Lebar (20mm)</option>
+          </select>
+          <select
+            id="compression"
+            class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="0.5">Kualitas: Rendah (Kecil)</option>
+            <option value="0.7" selected>Kualitas: Sedang</option>
+            <option value="0.9">Kualitas: Tinggi (Besar)</option>
+          </select>
+          <input
+            id="fileName"
+            type="text"
+            placeholder="Nama File PDF (opsional)"
+            class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[200px]" />
+        </div>
+      </div>
+
+      <div
+        id="dropZone"
+        class="group bg-white border-4 border-dashed border-slate-200 rounded-3xl p-12 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer mb-10">
+        <input
+          type="file"
+          id="imageInput"
+          accept="image/*"
+          multiple
+          class="hidden" />
+        <div
+          class="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-slate-700">Tarik gambar ke sini</h3>
+        <p class="text-slate-400 mt-1">
+          Atau klik untuk memilih file dari komputer
+        </p>
+      </div>
+
+      <div id="previewSection" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            Urutan Halaman
+            <span
+              class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full"
+              id="countBadge"
+              >0</span
+            >
+          </h2>
+          <p class="text-sm text-slate-400 italic font-medium">
+            Geser kotak gambar untuk mengatur urutan halaman
+          </p>
+        </div>
+
+        <div
+          id="previewGrid"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10"></div>
+
+        <div
+          class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-2xl flex justify-center gap-4 z-50">
+          <button
+            onclick="generatePDF(true)"
+            id="previewBtn"
+            class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl flex items-center gap-3 transition-all transform hover:-translate-y-1">
+            <span>Preview</span>
+          </button>
+          <button
+            onclick="generatePDF(false)"
+            id="generateBtn"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 flex items-center gap-3 transition-all transform hover:-translate-y-1">
+            <span>Download PDF Sekarang</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Preview -->
+    <div
+      id="previewModal"
+      class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex-col items-center justify-center p-4">
+      <div
+        class="bg-white w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-slate-800">Preview PDF</h3>
+          <button
+            onclick="closePreview()"
+            class="text-slate-500 hover:text-red-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <iframe id="previewFrame" class="flex-1 w-full border-none"></iframe>
+      </div>
+    </div>
+
+    <script>
+      const { jsPDF } = window.jspdf;
+      const input = document.getElementById("imageInput");
+      const dropZone = document.getElementById("dropZone");
+      const previewGrid = document.getElementById("previewGrid");
+      const previewSection = document.getElementById("previewSection");
+      const countBadge = document.getElementById("countBadge");
+
+      // Data Store (Menyimpan Base64 dan Info File)
+      let fileDataList = [];
+
+      // Inisialisasi SortableJS untuk Drag & Drop Reorder
+      const sortable = new Sortable(previewGrid, {
+        animation: 150,
+        ghostClass: "sortable-ghost",
+        onEnd: () => {
+          // Update fileDataList berdasarkan urutan DOM yang baru
+          const newOrder = [];
+          previewGrid.querySelectorAll("[data-id]").forEach((el) => {
+            const id = el.getAttribute("data-id");
+            newOrder.push(fileDataList.find((item) => item.id === id));
+          });
+          fileDataList = newOrder;
+          renderNumbers();
+        },
+      });
+
+      dropZone.addEventListener("click", () => input.click());
+
+      // Drag & Drop Handlers
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(
+          eventName,
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add("border-indigo-500", "bg-indigo-50");
+          },
+          false
+        );
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(
+          eventName,
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove("border-indigo-500", "bg-indigo-50");
+          },
+          false
+        );
+      });
+
+      dropZone.addEventListener("drop", async (e) => {
+        const files = Array.from(e.dataTransfer.files);
+        await handleFiles(files);
+      });
+
+      // Handle Upload
+      input.addEventListener("change", async (e) => {
+        const files = Array.from(e.target.files);
+        await handleFiles(files);
+      });
+
+      async function handleFiles(files) {
+        const quality = parseFloat(
+          document.getElementById("compression").value
+        );
+        for (const file of files) {
+          if (file.type.startsWith("image/")) {
+            try {
+              const base64 = await processImage(file, quality);
+              fileDataList.push({
+                id: Math.random().toString(36).substr(2, 9),
+                content: base64,
+                name: file.name,
+              });
+            } catch (err) {
+              console.error("Gagal memproses gambar:", file.name, err);
+            }
+          }
+        }
+        renderPreview();
+        input.value = ""; // Reset input
+      }
+
+      // Fungsi untuk membersihkan EXIF dan memperbaiki rotasi menggunakan Canvas
+      const processImage = (file, quality = 0.7) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              // Maksimal dimensi untuk optimasi (misal 2000px)
+              const maxDim = 2000;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                  height = (height * maxDim) / width;
+                  width = maxDim;
+                } else {
+                  width = (width * maxDim) / height;
+                  height = maxDim;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+              // Export ke JPEG dengan kualitas yang dipilih
+              resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = reject;
+            img.src = reader.result;
+          };
+          reader.onerror = reject;
+        });
+
+      function renderPreview() {
+        if (fileDataList.length > 0) {
+          previewSection.classList.remove("hidden");
+        }
+
+        previewGrid.innerHTML = "";
+        fileDataList.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.setAttribute("data-id", item.id);
+          card.className =
+            "relative bg-white border border-slate-200 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group";
+          card.innerHTML = `
+                    <div class="absolute top-3 left-3 bg-slate-800/70 text-white text-[10px] px-2 py-0.5 rounded-md z-10 page-number">Hal ${
+                      index + 1
+                    }</div>
+                    <img src="${
+                      item.content
+                    }" class="h-40 w-full object-cover rounded-lg drag-handle">
+                    <button onclick="removeItem('${
+                      item.id
+                    }')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <div class="mt-2 text-[10px] text-slate-400 truncate px-1">${
+                      item.name
+                    }</div>
+                `;
+          previewGrid.appendChild(card);
+        });
+        countBadge.innerText = fileDataList.length;
+      }
+
+      function renderNumbers() {
+        previewGrid.querySelectorAll(".page-number").forEach((el, i) => {
+          el.innerText = `Hal ${i + 1}`;
+        });
+      }
+
+      function removeItem(id) {
+        fileDataList = fileDataList.filter((item) => item.id !== id);
+        renderPreview();
+        if (fileDataList.length === 0) previewSection.classList.add("hidden");
+      }
+
+      async function generatePDF(isPreview = false) {
+        const btn = isPreview
+          ? document.getElementById("previewBtn")
+          : document.getElementById("generateBtn");
+        const format = document.getElementById("pageSize").value;
+        const selectedOrientation =
+          document.getElementById("orientation").value;
+        const margin = parseInt(document.getElementById("marginSize").value);
+        const customFileName = document.getElementById("fileName").value.trim();
+        const quality = parseFloat(
+          document.getElementById("compression").value
+        );
+
+        if (fileDataList.length === 0) {
+          alert("Pilih gambar terlebih dahulu!");
+          return;
+        }
+
+        const originalBtnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = isPreview ? "Memuat..." : "Memproses...";
+
+        try {
+          // Inisialisasi dokumen
+          const doc = new jsPDF({
+            orientation:
+              selectedOrientation === "auto" ? "p" : selectedOrientation,
+            unit: "mm",
+            format: format,
+            compress: true,
+          });
+
+          for (let i = 0; i < fileDataList.length; i++) {
+            const imgData = fileDataList[i].content;
+
+            // Gunakan Image object untuk mendapatkan dimensi yang akurat
+            const imgProps = await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => {
+                resolve({
+                  width: img.width,
+                  height: img.height,
+                  ratio: img.width / img.height,
+                });
+              };
+              img.onerror = () => reject("Gagal memuat gambar");
+              img.src = imgData;
+            });
+
+            // Tentukan orientasi halaman
+            let pageOrientation = selectedOrientation;
+            if (selectedOrientation === "auto") {
+              pageOrientation = imgProps.width > imgProps.height ? "l" : "p";
+            }
+
+            if (i > 0) {
+              doc.addPage(format, pageOrientation);
+            } else {
+              if (selectedOrientation === "auto" && pageOrientation === "l") {
+                doc.deletePage(1);
+                doc.addPage(format, "l");
+              }
+            }
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            const printableWidth = pageWidth - margin * 2;
+            const printableHeight = pageHeight - margin * 2;
+
+            let width = printableWidth;
+            let height = width / imgProps.ratio;
+
+            if (height > printableHeight) {
+              height = printableHeight;
+              width = height * imgProps.ratio;
+            }
+
+            const x = margin + (printableWidth - width) / 2;
+            const y = margin + (printableHeight - height) / 2;
+
+            // Gunakan kualitas kompresi jsPDF juga
+            const compressionLevel =
+              quality < 0.6 ? "FAST" : quality < 0.8 ? "MEDIUM" : "SLOW";
+
+            doc.addImage(
+              imgData,
+              "JPEG",
+              x,
+              y,
+              width,
+              height,
+              undefined,
+              compressionLevel
+            );
+          }
+
+          if (isPreview) {
+            const blobUrl = doc.output("bloburl");
+            document.getElementById("previewFrame").src = blobUrl;
+            document.getElementById("previewModal").classList.remove("hidden");
+            document.getElementById("previewModal").classList.add("flex");
+          } else {
+            const finalFileName = customFileName
+              ? `${customFileName.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`
+              : `SecurePDF_${new Date().getTime()}.pdf`;
+
+            doc.save(finalFileName);
+          }
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+          alert("Gagal membuat PDF: " + error);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalBtnText;
+        }
+      }
+
+      function closePreview() {
+        document.getElementById("previewModal").classList.add("hidden");
+        document.getElementById("previewModal").classList.remove("flex");
+        document.getElementById("previewFrame").src = "";
+      }
+    </script>
+  </body>
+</html>
