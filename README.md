@@ -12,19 +12,22 @@ SecurePDF Pro adalah aplikasi web sederhana, aman, dan sepenuhnya offline untuk 
 - **Preview PDF**: Lihat hasil PDF sebelum mengunduhnya.
 - **Kustomisasi**: Atur ukuran kertas (A3, A4, A5, Letter, Legal), margin, dan nama file kustom.
 
-## 🚀 Cara Penggunaan
+## 🚀 Cara Pakai
 
-1. **Clone repositori ini**:
-   ```bash
-   git clone https://github.com/username/SecurePDF.git
-   ```
-2. **Buka file**:
-   Cukup buka file `index.html` di browser favorit Anda (Chrome, Firefox, Edge, atau Safari).
-3. **Mulai Konversi**:
-   - Pilih pengaturan (Ukuran kertas, orientasi, dll).
-   - Unggah gambar (Klik atau Drag & Drop).
-   - Atur urutan jika perlu.
-   - Klik **Preview** untuk melihat hasil atau **Download** untuk menyimpan.
+### 1. Pakai Langsung Online
+
+Akses website tanpa install apa pun:
+
+👉 [https://secure-pdf-woad.vercel.app/](https://secure-pdf-woad.vercel.app/)
+
+### 2. Download & Jalankan Sendiri
+
+- **Download ZIP**: Klik tombol "Code" di GitHub, lalu pilih "Download ZIP" dan ekstrak.
+- **Atau Clone**:
+  ```bash
+  git clone https://github.com/username/SecurePDF.git
+  ```
+- **Buka file**: Cukup buka file `index.html` di browser favorit Anda (Chrome, Firefox, Edge, atau Safari).
 
 ## 🛠️ Teknologi yang Digunakan
 
