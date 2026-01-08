@@ -146,10 +146,10 @@ export default function Home() {
               href={feature.href}
               className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all hover:shadow-xl hover:scale-[1.02] duration-200">
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 rounded-2xl transition-opacity`}
+                className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 rounded-2xl transition-opacity`}
               />
               <div
-                className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.gradient} text-white mb-4 shadow-lg`}>
+                className={`inline-flex p-3 rounded-xl bg-linear-to-br ${feature.gradient} text-white mb-4 shadow-lg`}>
                 {feature.icon}
               </div>
               <h2 className="text-2xl font-bold text-black dark:text-zinc-50 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
