@@ -1,0 +1,466 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import Sortable from "sortablejs";
+import jsPDF from "jspdf";
+
+export default function ImageToPdfPage() {
+  const [fileDataList, setFileDataList] = useState([]);
+  const [pageSize, setPageSize] = useState("a4");
+  const [orientation, setOrientation] = useState("auto");
+  const [marginSize, setMarginSize] = useState("10");
+  const [compression, setCompression] = useState("0.7");
+  const [fileName, setFileName] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  const inputRef = useRef(null);
+  const dropZoneRef = useRef(null);
+  const previewGridRef = useRef(null);
+  const previewFrameRef = useRef(null);
+  const sortableRef = useRef(null);
+
+  // Initialize Sortable.js
+  useEffect(() => {
+    if (previewGridRef.current && fileDataList.length > 0) {
+      if (!sortableRef.current) {
+        sortableRef.current = Sortable.create(previewGridRef.current, {
+          animation: 150,
+          ghostClass: "sortable-ghost",
+          onEnd: () => {
+            const newOrder = Array.from(
+              previewGridRef.current.querySelectorAll("[data-id]")
+            ).map((el) => {
+              const id = el.getAttribute("data-id");
+              return fileDataList.find((item) => item.id === id);
+            });
+            setFileDataList(newOrder);
+          },
+        });
+      }
+    }
+  }, [fileDataList]);
+
+  // Set iframe src when preview URL changes
+  useEffect(() => {
+    if (previewUrl && previewFrameRef.current) {
+      previewFrameRef.current.src = previewUrl;
+    }
+  }, [previewUrl]);
+
+  const processImage = (file, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 2000;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = (height * maxDim) / width;
+              width = maxDim;
+            } else {
+              width = (width * maxDim) / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  const handleFiles = async (files) => {
+    const quality = parseFloat(compression);
+    const newFiles = [];
+
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        try {
+          const base64 = await processImage(file, quality);
+          newFiles.push({
+            id: Math.random().toString(36).substr(2, 9),
+            content: base64,
+            name: file.name,
+          });
+        } catch (err) {
+          console.error("Gagal memproses gambar:", file.name, err);
+        }
+      }
+    }
+
+    setFileDataList([...fileDataList, ...newFiles]);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZoneRef.current?.classList.remove("border-indigo-500", "bg-indigo-50");
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZoneRef.current?.classList.add("border-indigo-500", "bg-indigo-50");
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZoneRef.current?.classList.remove("border-indigo-500", "bg-indigo-50");
+  };
+
+  const removeItem = (id) => {
+    setFileDataList(fileDataList.filter((item) => item.id !== id));
+  };
+
+  const generatePDF = async (isPreview = false) => {
+    if (fileDataList.length === 0) {
+      alert("Pilih gambar terlebih dahulu!");
+      return;
+    }
+
+    setIsGenerating(true);
+    setIsPreviewMode(isPreview);
+
+    try {
+      const doc = new jsPDF({
+        orientation: orientation === "auto" ? "p" : orientation,
+        unit: "mm",
+        format: pageSize,
+        compress: true,
+      });
+
+      for (let i = 0; i < fileDataList.length; i++) {
+        const imgData = fileDataList[i].content;
+
+        const imgProps = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            resolve({
+              width: img.width,
+              height: img.height,
+              ratio: img.width / img.height,
+            });
+          };
+          img.onerror = () => reject("Gagal memuat gambar");
+          img.src = imgData;
+        });
+
+        let pageOrientation = orientation;
+        if (orientation === "auto") {
+          pageOrientation = imgProps.width > imgProps.height ? "l" : "p";
+        }
+
+        if (i > 0) {
+          doc.addPage(pageSize, pageOrientation);
+        } else {
+          if (orientation === "auto" && pageOrientation === "l") {
+            doc.deletePage(1);
+            doc.addPage(pageSize, "l");
+          }
+        }
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = parseInt(marginSize);
+
+        const printableWidth = pageWidth - margin * 2;
+        const printableHeight = pageHeight - margin * 2;
+
+        let width = printableWidth;
+        let height = width / imgProps.ratio;
+
+        if (height > printableHeight) {
+          height = printableHeight;
+          width = height * imgProps.ratio;
+        }
+
+        const x = margin + (printableWidth - width) / 2;
+        const y = margin + (printableHeight - height) / 2;
+
+        const compressionLevel =
+          compression < 0.6 ? "FAST" : compression < 0.8 ? "MEDIUM" : "SLOW";
+
+        doc.addImage(
+          imgData,
+          "JPEG",
+          x,
+          y,
+          width,
+          height,
+          undefined,
+          compressionLevel
+        );
+      }
+
+      if (isPreview) {
+        const blobUrl = doc.output("bloburl");
+        setPreviewUrl(blobUrl);
+        setIsPreviewOpen(true);
+      } else {
+        const finalFileName = fileName
+          ? `${fileName.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`
+          : `SecurePDF_${new Date().getTime()}.pdf`;
+        doc.save(finalFileName);
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Gagal membuat PDF: " + error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <>
+      <style jsx global>{`
+        .sortable-ghost {
+          opacity: 0.4;
+          border: 2px solid #4f46e5;
+        }
+        .drag-handle {
+          cursor: grab;
+        }
+        .drag-handle:active {
+          cursor: grabbing;
+        }
+      `}</style>
+
+      <div className="bg-slate-50 min-h-screen pb-20">
+        <div className="max-w-5xl mx-auto py-10 px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div>
+              <h1 className="text-3xl font-black text-indigo-600 tracking-tight">
+                SECURE<span className="text-slate-800">PDF</span>
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Privasi Total: Pemrosesan 100% di Browser Anda.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-3 text-black">
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="a4">Kertas: A4</option>
+                <option value="a3">Kertas: A3</option>
+                <option value="a5">Kertas: A5</option>
+                <option value="letter">Kertas: Letter</option>
+                <option value="legal">Kertas: Legal</option>
+              </select>
+              <select
+                value={orientation}
+                onChange={(e) => setOrientation(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="auto">Orientasi: Auto (Ikuti Gambar)</option>
+                <option value="p">Orientasi: Portrait</option>
+                <option value="l">Orientasi: Landscape</option>
+              </select>
+              <select
+                value={marginSize}
+                onChange={(e) => setMarginSize(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="0">Tanpa Margin</option>
+                <option value="5">Margin Sangat Kecil (5mm)</option>
+                <option value="10">Margin Kecil (10mm)</option>
+                <option value="20">Margin Lebar (20mm)</option>
+              </select>
+              <select
+                value={compression}
+                onChange={(e) => setCompression(e.target.value)}
+                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="0.5">Kualitas: Rendah (Kecil)</option>
+                <option value="0.7">Kualitas: Sedang</option>
+                <option value="0.9">Kualitas: Tinggi (Besar)</option>
+              </select>
+              <input
+                type="text"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                placeholder="Nama File PDF (opsional)"
+                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-50"
+              />
+            </div>
+          </div>
+
+          <div
+            ref={dropZoneRef}
+            onClick={() => inputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className="group bg-white border-4 border-dashed border-slate-200 rounded-3xl p-12 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer mb-10">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleFiles(Array.from(e.target.files || []))}
+              className="hidden"
+            />
+            <div className="bg-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-700">
+              Tarik gambar ke sini
+            </h3>
+            <p className="text-slate-400 mt-1">
+              Atau klik untuk memilih file dari komputer
+            </p>
+          </div>
+
+          {fileDataList.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  Urutan Halaman
+                  <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">
+                    {fileDataList.length}
+                  </span>
+                </h2>
+                <p className="text-sm text-slate-400 italic font-medium">
+                  Geser kotak gambar untuk mengatur urutan halaman
+                </p>
+              </div>
+
+              <div
+                ref={previewGridRef}
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-10">
+                {fileDataList.map((item, index) => (
+                  <div
+                    key={item.id}
+                    data-id={item.id}
+                    className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group">
+                    <div className="absolute top-3 left-3 bg-slate-800/70 text-white text-[10px] px-2 py-0.5 rounded-md z-10">
+                      Hal {index + 1}
+                    </div>
+                    <img
+                      src={item.content}
+                      alt={item.name}
+                      className="h-40 w-full object-cover rounded-lg drag-handle"
+                    />
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                    <div className="mt-2 text-[10px] text-slate-400 truncate px-1">
+                      {item.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-2xl flex justify-center gap-4 z-50">
+                <button
+                  onClick={() => generatePDF(true)}
+                  disabled={isGenerating}
+                  className="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-bold shadow-xl flex items-center gap-3 transition-all transform hover:-translate-y-1">
+                  <span>
+                    {isPreviewMode && isGenerating ? "Memuat..." : "Preview"}
+                  </span>
+                </button>
+                <button
+                  onClick={() => generatePDF(false)}
+                  disabled={isGenerating}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 flex items-center gap-3 transition-all transform hover:-translate-y-1">
+                  <span>
+                    {!isPreviewMode && isGenerating
+                      ? "Memproses..."
+                      : "Download PDF Sekarang"}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isPreviewOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 z-100 flex flex-col items-center justify-center p-4">
+          <div className="bg-white w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="font-bold text-slate-800">Preview PDF</h3>
+              <button
+                onClick={() => setIsPreviewOpen(false)}
+                className="text-slate-500 hover:text-red-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <iframe
+              ref={previewFrameRef}
+              src={previewUrl}
+              className="flex-1 w-full border-none"
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
