@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Sortable from "sortablejs";
-import jsPDF from "jspdf";
+import { imagesToPDF } from "@/lib/pdf";
 
 export default function ImageToPdfPage() {
   const [fileDataList, setFileDataList] = useState([]);
@@ -153,85 +153,30 @@ export default function ImageToPdfPage() {
     setIsPreviewMode(isPreview);
 
     try {
-      const doc = new jsPDF({
-        orientation: orientation === "auto" ? "p" : orientation,
-        unit: "mm",
-        format: pageSize,
-        compress: true,
-      });
-
-      for (let i = 0; i < fileDataList.length; i++) {
-        const imgData = fileDataList[i].content;
-
-        const imgProps = await new Promise((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => {
-            resolve({
-              width: img.width,
-              height: img.height,
-              ratio: img.width / img.height,
-            });
-          };
-          img.onerror = () => reject("Gagal memuat gambar");
-          img.src = imgData;
-        });
-
-        let pageOrientation = orientation;
-        if (orientation === "auto") {
-          pageOrientation = imgProps.width > imgProps.height ? "l" : "p";
+      const blob = await imagesToPDF(
+        fileDataList.map((f) => f.content),
+        {
+          format: pageSize,
+          orientation,
+          margin: parseInt(marginSize),
+          quality: parseFloat(compression),
         }
-
-        if (i > 0) {
-          doc.addPage(pageSize, pageOrientation);
-        } else {
-          if (orientation === "auto" && pageOrientation === "l") {
-            doc.deletePage(1);
-            doc.addPage(pageSize, "l");
-          }
-        }
-
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = parseInt(marginSize);
-
-        const printableWidth = pageWidth - margin * 2;
-        const printableHeight = pageHeight - margin * 2;
-
-        let width = printableWidth;
-        let height = width / imgProps.ratio;
-
-        if (height > printableHeight) {
-          height = printableHeight;
-          width = height * imgProps.ratio;
-        }
-
-        const x = margin + (printableWidth - width) / 2;
-        const y = margin + (printableHeight - height) / 2;
-
-        const compressionLevel =
-          compression < 0.6 ? "FAST" : compression < 0.8 ? "MEDIUM" : "SLOW";
-
-        doc.addImage(
-          imgData,
-          "JPEG",
-          x,
-          y,
-          width,
-          height,
-          undefined,
-          compressionLevel
-        );
-      }
+      );
 
       if (isPreview) {
-        const blobUrl = doc.output("bloburl");
+        const blobUrl = URL.createObjectURL(blob);
         setPreviewUrl(blobUrl);
         setIsPreviewOpen(true);
       } else {
         const finalFileName = fileName
           ? `${fileName.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`
           : `SecurePDF_${new Date().getTime()}.pdf`;
-        doc.save(finalFileName);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = finalFileName;
+        a.click();
+        URL.revokeObjectURL(url);
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -256,22 +201,24 @@ export default function ImageToPdfPage() {
         }
       `}</style>
 
-      <div className="bg-slate-50 min-h-screen pb-20">
+      <div className="bg-zinc-50 dark:bg-black min-h-screen pb-20">
         <div className="max-w-5xl mx-auto py-10 px-4">
           <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
             <div>
-              <h1 className="text-3xl font-black text-indigo-600 tracking-tight">
-                SECURE<span className="text-slate-800">PDF</span>
+              <h1 className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                SECURE
+                <span className="text-zinc-900 dark:text-zinc-50">PDF</span>
               </h1>
-              <p className="text-slate-500 text-sm">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
                 Privasi Total: Pemrosesan 100% di Browser Anda.
               </p>
             </div>
-            <div className="flex flex-wrap justify-end gap-3 text-black">
+            <div className="flex flex-wrap justify-end gap-3 text-zinc-900 dark:text-zinc-50">
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(e.target.value)}
-                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                style={{ colorScheme: "light dark" }}
+                className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 <option value="a4">Kertas: A4</option>
                 <option value="a3">Kertas: A3</option>
                 <option value="a5">Kertas: A5</option>
@@ -281,7 +228,8 @@ export default function ImageToPdfPage() {
               <select
                 value={orientation}
                 onChange={(e) => setOrientation(e.target.value)}
-                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                style={{ colorScheme: "light dark" }}
+                className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 <option value="auto">Orientasi: Auto (Ikuti Gambar)</option>
                 <option value="p">Orientasi: Portrait</option>
                 <option value="l">Orientasi: Landscape</option>
@@ -289,7 +237,8 @@ export default function ImageToPdfPage() {
               <select
                 value={marginSize}
                 onChange={(e) => setMarginSize(e.target.value)}
-                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                style={{ colorScheme: "light dark" }}
+                className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 <option value="0">Tanpa Margin</option>
                 <option value="5">Margin Sangat Kecil (5mm)</option>
                 <option value="10">Margin Kecil (10mm)</option>
@@ -298,7 +247,8 @@ export default function ImageToPdfPage() {
               <select
                 value={compression}
                 onChange={(e) => setCompression(e.target.value)}
-                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                style={{ colorScheme: "light dark" }}
+                className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 <option value="0.5">Kualitas: Rendah (Kecil)</option>
                 <option value="0.7">Kualitas: Sedang</option>
                 <option value="0.9">Kualitas: Tinggi (Besar)</option>
@@ -308,7 +258,7 @@ export default function ImageToPdfPage() {
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="Nama File PDF (opsional)"
-                className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-50"
+                className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-50"
               />
             </div>
           </div>
@@ -319,7 +269,7 @@ export default function ImageToPdfPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className="group bg-white border-4 border-dashed border-slate-200 rounded-3xl p-12 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer mb-10">
+            className="group bg-white dark:bg-zinc-900 border-4 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center transition-all hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 cursor-pointer mb-10">
             <input
               ref={inputRef}
               type="file"
@@ -343,10 +293,10 @@ export default function ImageToPdfPage() {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-slate-700">
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
               Tarik gambar ke sini
             </h3>
-            <p className="text-slate-400 mt-1">
+            <p className="text-zinc-500 dark:text-zinc-400 mt-1">
               Atau klik untuk memilih file dari komputer
             </p>
           </div>
@@ -354,13 +304,13 @@ export default function ImageToPdfPage() {
           {fileDataList.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                   Urutan Halaman
-                  <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">
+                  <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs px-2 py-1 rounded-full">
                     {fileDataList.length}
                   </span>
                 </h2>
-                <p className="text-sm text-slate-400 italic font-medium">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 italic font-medium">
                   Geser kotak gambar untuk mengatur urutan halaman
                 </p>
               </div>
@@ -372,8 +322,8 @@ export default function ImageToPdfPage() {
                   <div
                     key={item.id}
                     data-id={item.id}
-                    className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group select-none touch-none">
-                    <div className="absolute top-3 left-3 bg-slate-800/70 text-white text-[10px] px-2 py-0.5 rounded-md z-10">
+                    className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group select-none touch-none">
+                    <div className="absolute top-3 left-3 bg-zinc-800/70 dark:bg-zinc-700/70 text-white text-[10px] px-2 py-0.5 rounded-md z-10">
                       Hal {index + 1}
                     </div>
                     <img
@@ -398,18 +348,18 @@ export default function ImageToPdfPage() {
                         />
                       </svg>
                     </button>
-                    <div className="mt-2 text-[10px] text-slate-400 truncate px-1">
+                    <div className="mt-2 text-[10px] text-zinc-500 dark:text-zinc-400 truncate px-1">
                       {item.name}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-2xl flex justify-center gap-4 z-50">
+              <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-4 shadow-2xl flex justify-center gap-4 z-50">
                 <button
                   onClick={() => generatePDF(true)}
                   disabled={isGenerating}
-                  className="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-bold shadow-xl flex items-center gap-3 transition-all transform hover:-translate-y-1">
+                  className="bg-zinc-800 hover:bg-zinc-900 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-bold shadow-xl flex items-center gap-3 transition-all transform hover:-translate-y-1">
                   <span>
                     {isPreviewMode && isGenerating ? "Memuat..." : "Preview"}
                   </span>
@@ -417,7 +367,7 @@ export default function ImageToPdfPage() {
                 <button
                   onClick={() => generatePDF(false)}
                   disabled={isGenerating}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 flex items-center gap-3 transition-all transform hover:-translate-y-1">
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-3 transition-all transform hover:-translate-y-1">
                   <span>
                     {!isPreviewMode && isGenerating
                       ? "Memproses..."
@@ -442,13 +392,15 @@ export default function ImageToPdfPage() {
       </div>
 
       {isPreviewOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 z-100 flex flex-col items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold text-slate-800">Preview PDF</h3>
+        <div className="fixed inset-0 bg-zinc-900/80 dark:bg-black/90 z-100 flex flex-col items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-50">
+                Preview PDF
+              </h3>
               <button
                 onClick={() => setIsPreviewOpen(false)}
-                className="text-slate-500 hover:text-red-500">
+                className="text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6"

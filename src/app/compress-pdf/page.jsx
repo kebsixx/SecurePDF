@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PDFDocument } from "pdf-lib";
+import { compressPDF } from "@/lib/pdf";
 
 export default function CompressPDFPage() {
   const [file, setFile] = useState(null);
@@ -14,25 +14,7 @@ export default function CompressPDFPage() {
     setLoading(true);
 
     try {
-      // Baca file PDF
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-
-      // Buat PDF baru (rebuild = bentuk kompresi client-side)
-      const newPdf = await PDFDocument.create();
-
-      if (level === "low") {
-        newPdf.setTitle("");
-        newPdf.setAuthor("");
-        newPdf.setCreator("");
-        newPdf.setProducer("");
-      }
-      const pages = await newPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-      pages.forEach((p) => newPdf.addPage(p));
-
-      // Simpan PDF
-      const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = await compressPDF(file, level);
 
       // Download otomatis
       const url = URL.createObjectURL(blob);
@@ -50,54 +32,54 @@ export default function CompressPDFPage() {
   }
 
   return (
-    <main className="max-w-xl mx-auto px-4 py-12 text-slate-800">
-      <h1 className="text-2xl font-bold mb-2">Compress PDF</h1>
-      <p className="text-sm text-slate-500 mb-6">
-        File diproses langsung di browser. Tidak ada data yang diunggah ke
-        server.
-      </p>
-
-      <label className="block mb-2 text-sm font-medium">Tingkat Kompresi</label>
-      <select
-        value={level}
-        onChange={(e) => setLevel(e.target.value)}
-        style={{ colorScheme: "light" }}
-        className="mb-4 block w-full text-sm p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-white dark:text-slate-900">
-        <option className="text-slate-800 bg-white" value="low">
-          Rendah
-        </option>
-        <option className="text-slate-800 bg-white" value="medium">
-          Sedang
-        </option>
-        <option className="text-slate-800 bg-white" value="high">
-          Tinggi
-        </option>
-      </select>
-
-      <p className="text-xs text-slate-400 mb-4">
-        Kompresi dilakukan dengan mengoptimalkan metadata dan struktur PDF,
-        bukan mengubah isi dokumen.
-      </p>
-
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="mb-4 block w-full text-sm"
-      />
-
-      <button
-        onClick={handleCompress}
-        disabled={!file || loading}
-        className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold disabled:opacity-50">
-        {loading ? "Memproses..." : "Compress PDF"}
-      </button>
-
-      {file && (
-        <p className="text-xs text-slate-400 mt-4">
-          File: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+    <main className="min-h-screen bg-zinc-50 dark:bg-black py-12">
+      <div className="max-w-xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+          Compress PDF
+        </h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-8">
+          File diproses langsung di browser. Tidak ada data yang diunggah ke
+          server.
         </p>
-      )}
+
+        <label className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          Tingkat Kompresi
+        </label>
+        <select
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          style={{ colorScheme: "light dark" }}
+          className="mb-4 block w-full text-sm p-3 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="low">Rendah</option>
+          <option value="medium">Sedang</option>
+          <option value="high">Tinggi</option>
+        </select>
+
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+          Kompresi dilakukan dengan mengoptimalkan metadata dan struktur PDF,
+          bukan mengubah isi dokumen.
+        </p>
+
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="mb-4 block w-full text-sm p-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+        />
+
+        <button
+          onClick={handleCompress}
+          disabled={!file || loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors">
+          {loading ? "Memproses..." : "Compress PDF"}
+        </button>
+
+        {file && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4">
+            File: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+          </p>
+        )}
+      </div>
     </main>
   );
 }
