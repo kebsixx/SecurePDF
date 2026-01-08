@@ -22,26 +22,37 @@ export default function ImageToPdfPage() {
   const previewFrameRef = useRef(null);
   const sortableRef = useRef(null);
 
-  // Initialize Sortable.js
+  // Initialize Sortable.js (with touch-friendly options)
   useEffect(() => {
-    if (previewGridRef.current && fileDataList.length > 0) {
-      if (!sortableRef.current) {
-        sortableRef.current = Sortable.create(previewGridRef.current, {
-          animation: 150,
-          ghostClass: "sortable-ghost",
-          onEnd: () => {
-            const newOrder = Array.from(
-              previewGridRef.current.querySelectorAll("[data-id]")
-            ).map((el) => {
-              const id = el.getAttribute("data-id");
-              return fileDataList.find((item) => item.id === id);
-            });
-            setFileDataList(newOrder);
-          },
-        });
-      }
+    if (
+      previewGridRef.current &&
+      fileDataList.length > 0 &&
+      !sortableRef.current
+    ) {
+      sortableRef.current = Sortable.create(previewGridRef.current, {
+        animation: 150,
+        ghostClass: "sortable-ghost",
+        handle: ".drag-handle",
+        forceFallback: true,
+        fallbackOnBody: true,
+        delayOnTouchOnly: true,
+        delay: 180,
+        touchStartThreshold: 5,
+        scroll: true,
+        scrollSensitivity: 30,
+        scrollSpeed: 10,
+        onEnd: () => {
+          const newOrder = Array.from(
+            previewGridRef.current.querySelectorAll("[data-id]")
+          ).map((el) => {
+            const id = el.getAttribute("data-id");
+            return fileDataList.find((item) => item.id === id);
+          });
+          setFileDataList(newOrder);
+        },
+      });
     }
-  }, [fileDataList]);
+  }, [fileDataList.length]);
 
   // Set iframe src when preview URL changes
   useEffect(() => {
@@ -361,14 +372,14 @@ export default function ImageToPdfPage() {
                   <div
                     key={item.id}
                     data-id={item.id}
-                    className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group">
+                    className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-sm hover:shadow-md transition-shadow group select-none touch-none">
                     <div className="absolute top-3 left-3 bg-slate-800/70 text-white text-[10px] px-2 py-0.5 rounded-md z-10">
                       Hal {index + 1}
                     </div>
                     <img
                       src={item.content}
                       alt={item.name}
-                      className="h-40 w-full object-cover rounded-lg drag-handle"
+                      className="h-40 w-full object-cover rounded-lg drag-handle cursor-grab active:cursor-grabbing select-none touch-none"
                     />
                     <button
                       onClick={() => removeItem(item.id)}
