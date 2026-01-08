@@ -1,6 +1,12 @@
 // Consolidated imports at the top
 import { PDFDocument } from "pdf-lib";
 import jsPDF from "jspdf";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Setup worker untuk pdfjs-dist
+if (typeof window !== "undefined") {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+}
 
 // lib/pdf/compress.js
 export async function compressPDF(file, level = "medium") {
@@ -142,4 +148,61 @@ export async function imagesToPDF(imageDataList, options = {}) {
 
   // Return a Blob for preview or download
   return doc.output("blob");
+}
+
+// lib/pdf/pdf-to-images.js
+// Convert PDF pages to images (PNG format)
+export async function pdfToImages(file, options = {}) {
+  const {
+    scale = 2, // Resolusi: 1 = 72dpi, 2 = 144dpi, 3 = 216dpi
+    format = "png", // 'png' atau 'jpeg'
+    quality = 0.92, // Untuk JPEG, 0-1
+  } = options;
+
+  // Baca file sebagai ArrayBuffer
+  const arrayBuffer = await file.arrayBuffer();
+
+  // Load PDF menggunakan pdf.js
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  const images = [];
+
+  // Loop semua halaman
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    // Ambil halaman
+    const page = await pdf.getPage(pageNum);
+
+    // Hitung ukuran canvas berdasarkan viewport
+    const viewport = page.getViewport({ scale });
+
+    // Buat canvas element
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    // Render halaman ke canvas
+    await page.render({
+      canvasContext: context,
+      viewport: viewport,
+    }).promise;
+
+    // Convert canvas ke Blob
+    const blob = await new Promise((resolve) => {
+      if (format === "jpeg") {
+        canvas.toBlob(resolve, "image/jpeg", quality);
+      } else {
+        canvas.toBlob(resolve, "image/png");
+      }
+    });
+
+    images.push({
+      blob,
+      pageNumber: pageNum,
+      width: viewport.width,
+      height: viewport.height,
+    });
+  }
+
+  return images;
 }

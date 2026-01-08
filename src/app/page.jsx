@@ -24,6 +24,27 @@ export default function Home() {
       gradient: "from-indigo-500 to-purple-600",
     },
     {
+      title: "PDF to Image",
+      description:
+        "Ekstrak setiap halaman PDF menjadi gambar berkualitas tinggi dalam format PNG atau JPEG",
+      href: "/pdf-to-image",
+      icon: (
+        <svg
+          className="h-8 w-8"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      ),
+      gradient: "from-purple-500 to-pink-600",
+    },
+    {
       title: "Compress PDF",
       description:
         "Kurangi ukuran file PDF dengan tiga tingkat kompresi yang dapat disesuaikan",
