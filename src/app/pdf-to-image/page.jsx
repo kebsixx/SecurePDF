@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { pdfToImages } from "@/lib/pdf";
+import Navigation from "@/components/Navigation";
 
 export default function PdfToImagePage() {
   const [file, setFile] = useState(null);
@@ -10,6 +11,7 @@ export default function PdfToImagePage() {
   const [loading, setLoading] = useState(false);
   const [scale, setScale] = useState("2");
   const [format, setFormat] = useState("png");
+  const [fileName, setFileName] = useState("");
 
   async function handleConvert() {
     if (!file) return alert("Pilih file PDF terlebih dahulu");
@@ -33,13 +35,12 @@ export default function PdfToImagePage() {
     }
   }
 
-  function downloadImage(imageData, index) {
+  function downloadImage(imageData, _index) {
     const url = URL.createObjectURL(imageData.blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${file.name.replace(/\.pdf$/i, "")}_page_${
-      imageData.pageNumber
-    }.${format}`;
+    const baseName = fileName || file.name.replace(/\.pdf$/i, "") || "image";
+    a.download = `${baseName}_page_${imageData.pageNumber}.${format}`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -65,8 +66,28 @@ export default function PdfToImagePage() {
               Privasi Total: Pemrosesan 100% di Browser Anda.
             </p>
           </Link>
-          <div className="flex flex-wrap justify-end gap-3 text-zinc-900 dark:text-zinc-50">
-            <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+          <Navigation activePage="pdf-to-image" theme="purple" />
+        </div>
+
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 mb-6">
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-4 flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-purple-600 dark:text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+              />
+            </svg>
+            Pengaturan Konversi
+          </h3>
+          <div className="flex flex-wrap gap-3 text-zinc-900 dark:text-zinc-50">
+            <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
               <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Resolusi:
               </label>
@@ -121,35 +142,14 @@ export default function PdfToImagePage() {
                 JPEG
               </button>
             </div>
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              placeholder="Nama file (opsional)"
+              className="bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-500 outline-none min-w-35"
+            />
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-2">
-          <Link
-            href="/image-to-pdf"
-            className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-            Image → PDF
-          </Link>
-          <Link
-            href="/pdf-to-image"
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold whitespace-nowrap">
-            PDF → Image
-          </Link>
-          <Link
-            href="/compress-pdf"
-            className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-            Compress
-          </Link>
-          <Link
-            href="/merge-pdf"
-            className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-            Merge
-          </Link>
-          <Link
-            href="/split-pdf"
-            className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-            Split
-          </Link>
         </div>
 
         <div

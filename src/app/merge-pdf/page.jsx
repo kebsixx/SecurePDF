@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Sortable from "sortablejs";
 import { mergePDFs } from "@/lib/pdf";
+import Navigation from "@/components/Navigation";
 
 export default function MergePDFPage() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
   const listRef = useRef(null);
   const sortableRef = useRef(null);
 
@@ -61,7 +63,8 @@ export default function MergePDFPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "merged.pdf";
+      const baseName = fileName || "merged";
+      a.download = baseName + ".pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -108,34 +111,35 @@ export default function MergePDFPage() {
                 Privasi Total: Pemrosesan 100% di Browser Anda.
               </p>
             </Link>
+            <Navigation activePage="merge-pdf" theme="emerald" />
           </div>
 
-          <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-2">
-            <Link
-              href="/image-to-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Image → PDF
-            </Link>
-            <Link
-              href="/pdf-to-image"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              PDF → Image
-            </Link>
-            <Link
-              href="/compress-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Compress
-            </Link>
-            <Link
-              href="/merge-pdf"
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold whitespace-nowrap">
-              Merge
-            </Link>
-            <Link
-              href="/split-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Split
-            </Link>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 mb-6">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-4 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
+              Nama File Output
+            </h3>
+            <div className="flex flex-wrap gap-3 text-zinc-900 dark:text-zinc-50">
+              <input
+                type="text"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                placeholder="Nama file (opsional)"
+                className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none w-full"
+              />
+            </div>
           </div>
 
           <div

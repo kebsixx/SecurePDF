@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Sortable from "sortablejs";
 import { imagesToPDF } from "@/lib/pdf";
+import Navigation from "@/components/Navigation";
 
 export default function ImageToPdfPage() {
   const [fileDataList, setFileDataList] = useState([]);
@@ -204,7 +205,7 @@ export default function ImageToPdfPage() {
 
       <div className="bg-zinc-50 dark:bg-black min-h-screen pb-20">
         <div className="max-w-5xl mx-auto py-10 px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <Link
               href="/"
               className="cursor-pointer hover:opacity-80 transition-opacity">
@@ -216,104 +217,35 @@ export default function ImageToPdfPage() {
                 Privasi Total: Pemrosesan 100% di Browser Anda.
               </p>
             </Link>
-            <div className="flex flex-wrap justify-end gap-3 text-zinc-900 dark:text-zinc-50 max-w-lg">
-              <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Kertas:
-                </label>
-                <button
-                  onClick={() => setPageSize("a4")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    pageSize === "a4"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  A4
-                </button>
-                <button
-                  onClick={() => setPageSize("a3")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    pageSize === "a3"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  A3
-                </button>
-                <button
-                  onClick={() => setPageSize("letter")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    pageSize === "letter"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  Letter
-                </button>
-              </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Orientasi:
-                </label>
-                <button
-                  onClick={() => setOrientation("auto")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    orientation === "auto"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  Auto
-                </button>
-                <button
-                  onClick={() => setOrientation("p")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    orientation === "p"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  Portrait
-                </button>
-                <button
-                  onClick={() => setOrientation("l")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    orientation === "l"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  Landscape
-                </button>
-              </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Margin:
-                </label>
-                <button
-                  onClick={() => setMarginSize("0")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    marginSize === "0"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  0
-                </button>
-                <button
-                  onClick={() => setMarginSize("10")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    marginSize === "10"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  10mm
-                </button>
-                <button
-                  onClick={() => setMarginSize("20")}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    marginSize === "20"
-                      ? "bg-indigo-600 text-white"
-                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
-                  }`}>
-                  20mm
-                </button>
-              </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+            <Navigation activePage="image-to-pdf" theme="indigo" />
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 mb-6">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-4 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
+              Pengaturan PDF
+            </h3>
+            <div className="flex flex-wrap gap-3 text-zinc-900 dark:text-zinc-50">
+              <input
+                type="text"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                placeholder="Nama file (opsional)"
+                className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none min-w-35"
+              />
+              <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
                 <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                   Kualitas:
                 </label>
@@ -345,35 +277,103 @@ export default function ImageToPdfPage() {
                   Tinggi
                 </button>
               </div>
+              <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Orientasi:
+                </label>
+                <button
+                  onClick={() => setOrientation("auto")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    orientation === "auto"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  Auto
+                </button>
+                <button
+                  onClick={() => setOrientation("p")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    orientation === "p"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  Portrait
+                </button>
+                <button
+                  onClick={() => setOrientation("l")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    orientation === "l"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  Landscape
+                </button>
+              </div>
+              <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Kertas:
+                </label>
+                <button
+                  onClick={() => setPageSize("a4")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    pageSize === "a4"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  A4
+                </button>
+                <button
+                  onClick={() => setPageSize("a3")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    pageSize === "a3"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  A3
+                </button>
+                <button
+                  onClick={() => setPageSize("letter")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    pageSize === "letter"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  Letter
+                </button>
+              </div>
+              <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Margin:
+                </label>
+                <button
+                  onClick={() => setMarginSize("0")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    marginSize === "0"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  0
+                </button>
+                <button
+                  onClick={() => setMarginSize("10")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    marginSize === "10"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  10mm
+                </button>
+                <button
+                  onClick={() => setMarginSize("20")}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    marginSize === "20"
+                      ? "bg-indigo-600 text-white"
+                      : "hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-zinc-700 dark:text-zinc-300"
+                  }`}>
+                  20mm
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-            <Link
-              href="/image-to-pdf"
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold whitespace-nowrap">
-              Image → PDF
-            </Link>
-            <Link
-              href="/pdf-to-image"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              PDF → Image
-            </Link>
-            <Link
-              href="/compress-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Compress
-            </Link>
-            <Link
-              href="/merge-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Merge
-            </Link>
-            <Link
-              href="/split-pdf"
-              className="px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap">
-              Split
-            </Link>
           </div>
 
           <div
