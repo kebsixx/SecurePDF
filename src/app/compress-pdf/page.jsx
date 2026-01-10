@@ -9,29 +9,44 @@ import Navigation from "@/components/Navigation";
 
 export default function CompressPDFPage() {
   const [file, setFile] = useState(null);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [level, setLevel] = useState("medium");
-  const [fileName, setFileName] = useState("");
 
-  async function handleCompress() {
-    if (!file) return alert("Pilih file PDF terlebih dahulu");
+  async function handleConvert() {
+    if (!file) return;
 
     setLoading(true);
+    setImages([]);
 
     try {
-      const blob = await compressPDF(file, level);
+      const pdfjsLib = await import("pdfjs-dist");
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const baseName =
-        fileName || file.name.replace(/\.pdf$/i, "") || "document";
-      a.download = baseName + "-compressed.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      const result = [];
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2 });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        result.push(canvas.toDataURL("image/png"));
+      }
+
+      setImages(result);
     } catch (err) {
       console.error(err);
-      alert("Gagal memproses PDF");
+      alert("Gagal convert PDF ke image");
     } finally {
       setLoading(false);
     }
