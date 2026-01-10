@@ -6,7 +6,6 @@ export const revalidate = 0;
 
 import { useState } from "react";
 import Link from "next/link";
-import { compressPDF } from "@/lib/pdf";
 import Navigation from "@/components/Navigation";
 
 export default function CompressPDFPage() {
