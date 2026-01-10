@@ -10,6 +10,8 @@ if (typeof window !== "undefined") {
 
 // lib/pdf/compress.js
 export async function compressPDF(file, level = "medium") {
+  const { PDFDocument } = await import("pdf-lib");
+
   const arrayBuffer = await file.arrayBuffer();
 
   const sourcePdf = await PDFDocument.load(arrayBuffer, {
