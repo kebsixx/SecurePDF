@@ -5,9 +5,6 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 import { useState } from "react";
-import { compressPDF } from "@/lib/pdf/compress";
-
-import { useState } from "react";
 import Link from "next/link";
 import { compressPDF } from "@/lib/pdf";
 import Navigation from "@/components/Navigation";
